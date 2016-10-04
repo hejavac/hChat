@@ -8,7 +8,7 @@
 read(10000, <<Bin/binary>>) ->
 	{AccountName, Bin1} = protocol:read_string(Bin),
 	{Password, _} = protocol:read_string(Bin1),
-	{ok, [AccountName, Password]};
+	{ok, login, [AccountName, Password]};
 
 read(_Cmd, _Bin) ->
 	{ok, []}.

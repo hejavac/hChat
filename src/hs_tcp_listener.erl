@@ -44,7 +44,7 @@ handle_info({inet_async, LSocket, Ref, {ok, Socket}},
         {ok, Pid} = hs_tcp_client_sup:start_client(),
         % 把Sock绑定到Pid中
         gen_tcp:controlling_process(Socket, Pid),
-        hs_tcp_client_sup:set_socket(Pid, Socket),
+        hs_tcp_client:set_socket(Pid, Socket),
         % 监听下一个
         case prim_inet:async_accept(LSocket, -1) of
             {ok, NewRef} -> ok;

@@ -2,6 +2,7 @@
 -module(protocol).
 -export([read_string/1, pack/2]).
 
+-include("protocol.hrl").
 
 %%读取字符串
 read_string(<<Len:16, Bin1/binary>>) ->
@@ -15,5 +16,5 @@ read_string(_) ->
     {[],<<>>}.
 
 pack(Cmd, Data) ->
-    L = byte_size(Data) + 4,
+    L = byte_size(Data) + ?HEADER_LENGTH,
     <<L:16, Cmd:16, Data/binary>>.

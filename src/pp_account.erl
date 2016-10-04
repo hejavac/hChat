@@ -1,7 +1,7 @@
 
 -module(pp_account).
 
--export([hanlde/3]).
+-export([handle/3]).
 
-hanlde(10000, [], []) ->
+handle(10000, [], _Data) ->
 	true.

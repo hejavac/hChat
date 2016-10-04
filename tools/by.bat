@@ -13,6 +13,6 @@ rem erl -noshell -s make all -s init stop
 
 cd config
 
-erl -config hs -pa ../ebin -s hs_app start
+erl -boot start_sasl -config hs -pa ../ebin -s hs_app start
 
 pause

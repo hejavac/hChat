@@ -20,9 +20,10 @@
 -define(LOGIN, 1).
 
 -define(TCP_TIMEOUT, 1000). 		% 解析协议超时时间
--define(HEART_TIMEOUT, 60000). 		% 心跳包超时时间
+-define(HEART_TIMEOUT, 60000*5). 	% 心跳包超时时间
 -define(HEART_TIMEOUT_TIME, 0). 	% 心跳包超时次数
--define(HEADER_LENGTH, 4). 			% 消息头长度
+
+-include("protocol.hrl").
 
 -record(state, {
         socket
@@ -41,6 +42,7 @@ set_socket(Pid, Socket) when is_pid(Pid), is_port(Socket) ->
 
 init([]) ->
     process_flag(trap_exit, true),
+    io:format("~n M:~p L:~p hs_tcp_client init ~n", [?MODULE, ?LINE]), 
     {ok, wait_for_socket, #state{}}.
 
 handle_event(Event, StateName, StateData) ->
@@ -61,6 +63,7 @@ handle_info(_Info, StateName, State) ->
     {noreply, StateName, State}.
 
 terminate(_Reason, _StateName, #state{socket=Socket}) ->
+	io:format("~n M:~p L:~p Socket:~p ", [?MODULE, ?LINE, Socket]),
     (catch gen_tcp:close(Socket)),
     ok.
  
@@ -71,6 +74,7 @@ code_change(_OldVsn, StateName, StateData, _Extra) ->
 
 %% 等待Socket
 wait_for_socket({socket_ready, Socket}, State) when is_port(Socket) ->
+	io:format("~n M:~p L:~p isport:~p peername:~p ~n", [?MODULE, ?LINE, is_port(Socket), inet:peername(Socket)]), 
     Ref = async_recv(Socket, ?HEADER_LENGTH, ?HEART_TIMEOUT),
     inet:setopts(Socket, [{packet, 0}, binary]),
     {ok, {IP, _Port}} = inet:peername(Socket),
@@ -90,12 +94,12 @@ wait_for_account({inet_async, Socket, Ref, {ok, <<Len:16, Cmd:16>>}}, #state{ref
 				{inet_async, Socket, Ref1, {ok, Binary}} ->
 					case read_protocol(Cmd, Binary) of
 						{ok, login, Data} ->
-							case pp_account:hanlde(10000, [], Data) of
+							case pp_account:handle(10000, [], Data) of
 								true ->
-									io:format("~n M:~p L:~p ~n", [?MODULE, ?LINE]),
+									io:format("~n M:~p L:~p login ~n", [?MODULE, ?LINE]),
 									[AccountName, _Password] = Data,
-									NewState = State#state{login = ?LOGIN, account_name = AccountName},
-									Ref = async_recv(Socket, ?HEADER_LENGTH, ?HEART_TIMEOUT),
+									Ref2 = async_recv(Socket, ?HEADER_LENGTH, ?HEART_TIMEOUT),
+									NewState = State#state{login = ?LOGIN, account_name = AccountName, ref = Ref2},
 									{next_state, wait_for_data, NewState};
 								false ->
 									login_lost(Socket, State, 0, "login fail")
@@ -117,6 +121,7 @@ wait_for_account(Other, #state{socket = Socket} = State) ->
 	{stop, normal, State}.
 
 wait_for_data({inet_async, Socket, Ref, {ok, <<Len:16, Cmd:16>>}}, #state{ref = Ref, socket = Socket} = State) ->
+	io:format("~n M:~p L:~p wait_for_data ~n", [?MODULE, ?LINE]),
 	BodyLen = Len - ?HEADER_LENGTH,
     case BodyLen > 0 of
         true ->
@@ -171,8 +176,8 @@ async_recv(Sock, Length, Timeout) when is_port(Sock) ->
     end.
 
 read_protocol(Cmd, Binary) ->
-    [H1, H2, _, _, _] = integer_to_list(Cmd),
-    Module = list_to_atom("protocol_"++[H1,H2]),
+    [H1, H2, H3, _, _] = integer_to_list(Cmd),
+    Module = list_to_atom("protocol_"++[H1,H2,H3]),
     Module:read(Cmd, Binary).
 
 login_lost(Socket, _State, _Cmd, Reason) ->
