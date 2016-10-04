@@ -9,6 +9,10 @@ goto start
 
 cd ../
 
-erl -noshell -s make all -s init stop
+rem erl -noshell -s make all -s init stop
 
-erl -pa ./ebin
+cd config
+
+erl -config hs -pa ../ebin -s hs_app start
+
+pause

@@ -1,7 +1,7 @@
 
 %% 配置读取
 
--export(config).
+-module(config).
 
 -export([
         get_port/0

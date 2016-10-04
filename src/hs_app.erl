@@ -7,7 +7,8 @@
 -export([start/0, start/2, stop/1, init/1]).
 
 start() ->
-    application:start(hs_app),
+	io:format("~n M:~p L:~p hs_app~n", [?MODULE, ?LINE]),
+    application:start(hs),
     ok.
 
 %%----------------------------------------------------------------------
@@ -15,6 +16,7 @@ start() ->
 %%----------------------------------------------------------------------
 start(_Type, _Args) ->
     ListenPort = config:get_port(),
+    io:format("~n M:~p L:~p ListenPort:~p ~n", [?MODULE, ?LINE, ListenPort]),
     supervisor:start_link({local, ?MODULE}, ?MODULE, [ListenPort]).
  
 stop(_S) ->
@@ -24,6 +26,7 @@ stop(_S) ->
 %% Supervisor behaviour callbacks
 %%----------------------------------------------------------------------
 init([Port]) ->
+	io:format("~n M:~p L:~p Port:~p ~n", [?MODULE, ?LINE, Port]),
     {ok,
         {
             {one_for_one, 5, 10},

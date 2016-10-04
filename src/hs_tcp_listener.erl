@@ -4,7 +4,7 @@
 -behaviour(gen_server).
 
 %% External API
--export([start_link/2]).
+-export([start_link/1]).
  
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
@@ -18,9 +18,11 @@ start_link(Port) ->
 init([Port]) ->
     Opts = [binary, {packet, 0}, {reuseaddr, true},
             {keepalive, true}, {backlog, 30}, {active, false}],
+    io:format("~n M:~p L:~p Port:~p ~n", [?MODULE, ?LINE, Port]),
     case gen_tcp:listen(Port, Opts) of
         {ok, LSocket} ->
             {ok, Ref} = prim_inet:async_accept(LSocket, -1),
+            io:format("~n M:~p L:~p LSocket:~p Ref:~p ~n", [?MODULE, ?LINE, LSocket, Ref]),
             {ok, #state{socket = LSocket, ref = Ref}};
         {error, Reason} ->
             {stop, Reason}
@@ -53,6 +55,19 @@ handle_info({inet_async, LSocket, Ref, {ok, Socket}},
         error_logger:error_msg("Error in async accept: ~p.\n", [Why]),
         {stop, Why, State}
     end;
+
+handle_info({inet_async, LSock, Ref, Error}, #state{socket=LSock, ref=Ref} = State) ->
+    error_logger:error_msg("Error in socket ref: ~p.\n", [Error]),
+    {stop, Error, State};
+
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 
 %% 设置Scoket属性
 set_sockopt(LSocket, Socket) ->
