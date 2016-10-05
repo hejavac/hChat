@@ -17,7 +17,8 @@
 	]).
 
 %% 登录标志位
--define(LOGIN, 1).
+-define(LOGIN, 1).                  % 登录
+-define(LOGIN_ERROR, 0).            % 登录失败
 
 -define(TCP_TIMEOUT, 1000). 		% 解析协议超时时间
 -define(HEART_TIMEOUT, 60000*5). 	% 心跳包超时时间
@@ -97,9 +98,15 @@ wait_for_account({inet_async, Socket, Ref, {ok, <<Len:16, Cmd:16>>}}, #state{ref
 							case pp_account:handle(10000, [], Data) of
 								true ->
 									io:format("~n M:~p L:~p login ~n", [?MODULE, ?LINE]),
-									[AccountName, _Password] = Data,
+									[AccountName, Password] = Data,
 									Ref2 = async_recv(Socket, ?HEADER_LENGTH, ?HEART_TIMEOUT),
 									NewState = State#state{login = ?LOGIN, account_name = AccountName, ref = Ref2},
+                                    case mod_account:login(AccountName, Password, Socket) of
+                                        {false, _} -> 
+                                            {ok, BinData} = protocol_100:write(10000, [?LOGIN]);
+                                            lib_send:send_one(Socket, BinData);
+                                        {ok, Pid} ->
+                                            
 									{next_state, wait_for_data, NewState};
 								false ->
 									login_lost(Socket, State, 0, "login fail")

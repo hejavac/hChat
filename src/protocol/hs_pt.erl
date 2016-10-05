@@ -1,8 +1,14 @@
 
 -module(protocol).
+
+-export([send_one/2]).
+
 -export([read_string/1, pack/2]).
 
 -include("protocol.hrl").
+
+send_one(S, Bin) when is_port(S) ->
+    gen_tcp:send(S, Bin).
 
 %%读取字符串
 read_string(<<Len:16, Bin1/binary>>) ->
