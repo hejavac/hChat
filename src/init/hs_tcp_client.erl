@@ -24,7 +24,7 @@
 -define(HEART_TIMEOUT, 60000*5). 	% 心跳包超时时间
 -define(HEART_TIMEOUT_TIME, 0). 	% 心跳包超时次数
 
--include("protocol.hrl").
+-include("hs_pt.hrl").
 
 -record(state, {
         socket
@@ -95,18 +95,19 @@ wait_for_account({inet_async, Socket, Ref, {ok, <<Len:16, Cmd:16>>}}, #state{ref
 				{inet_async, Socket, Ref1, {ok, Binary}} ->
 					case read_protocol(Cmd, Binary) of
 						{ok, login, Data} ->
-							case pp_account:handle(10000, [], Data) of
+							case hs_account_100:handle(10000, [], Data) of
 								true ->
 									io:format("~n M:~p L:~p login ~n", [?MODULE, ?LINE]),
 									[AccountName, Password] = Data,
 									Ref2 = async_recv(Socket, ?HEADER_LENGTH, ?HEART_TIMEOUT),
 									NewState = State#state{login = ?LOGIN, account_name = AccountName, ref = Ref2},
-                                    case mod_account:login(AccountName, Password, Socket) of
+                                    case hs_account:login(AccountName, Password, Socket) of
                                         {false, _} -> 
-                                            {ok, BinData} = protocol_100:write(10000, [?LOGIN]);
+                                            {ok, BinData} = protocol_100:write(10000, [?LOGIN]),
                                             lib_send:send_one(Socket, BinData);
                                         {ok, Pid} ->
-                                            
+                                            skip
+                                    end,
 									{next_state, wait_for_data, NewState};
 								false ->
 									login_lost(Socket, State, 0, "login fail")
@@ -138,7 +139,7 @@ wait_for_data({inet_async, Socket, Ref, {ok, <<Len:16, Cmd:16>>}}, #state{ref = 
                     case read_protocol(Cmd, Binary) of
                         %%这里是处理游戏逻辑
                         {ok, Data} ->
-                            case catch gen:call(State#state.pid, '$gen_call', {'SOCKET_EVENT', Cmd, Data}) of
+                            case catch gen:call(State#state.pid, '$gen_call', {'socket_protocol', Cmd, Data}) of
                                 {ok,_Res} ->
                                     async_recv(Socket, ?HEADER_LENGTH, ?HEART_TIMEOUT);
                                 {'EXIT',Reason} ->
@@ -154,7 +155,7 @@ wait_for_data({inet_async, Socket, Ref, {ok, <<Len:16, Cmd:16>>}}, #state{ref = 
             case read_protocol(Cmd, <<>>) of
                 %%这里是处理游戏逻辑
                 {ok, Data} ->
-                    case catch gen:call(State#state.pid, '$gen_call', {'SOCKET_EVENT', Cmd, Data}, 3000) of
+                    case catch gen:call(State#state.pid, '$gen_call', {'socket_protocol', Cmd, Data}, 3000) of
                         {ok,_Res} ->
                             async_recv(Socket, ?HEADER_LENGTH, ?HEART_TIMEOUT);
                         {'EXIT',Reason} ->
@@ -184,7 +185,7 @@ async_recv(Sock, Length, Timeout) when is_port(Sock) ->
 
 read_protocol(Cmd, Binary) ->
     [H1, H2, H3, _, _] = integer_to_list(Cmd),
-    Module = list_to_atom("protocol_"++[H1,H2,H3]),
+    Module = list_to_atom("hs_pt_"++[H1,H2,H3]),
     Module:read(Cmd, Binary).
 
 login_lost(Socket, _State, _Cmd, Reason) ->

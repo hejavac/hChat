@@ -1,5 +1,5 @@
 
--module(protocol_100).
+-module(hs_pt_100).
 
 -compile(export_all).
 

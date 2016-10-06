@@ -1,4 +1,4 @@
 
--module(pp_chat).
+-module(hs_chat_101).
 
 -export([]).

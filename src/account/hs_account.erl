@@ -1,4 +1,13 @@
 
--module(mod_account).
+-module(hs_account).
 
--export([]).
+-export([
+		login/3
+		, logout/1
+	]).
+
+login(_AccountName, _Password, _Socket) ->
+	ok.
+
+logout(_Role) ->
+	skip.

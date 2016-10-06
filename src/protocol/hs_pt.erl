@@ -1,11 +1,11 @@
 
--module(protocol).
+-module(hs_pt).
 
 -export([send_one/2]).
 
 -export([read_string/1, pack/2]).
 
--include("protocol.hrl").
+-include("hs_pt.hrl").
 
 send_one(S, Bin) when is_port(S) ->
     gen_tcp:send(S, Bin).
