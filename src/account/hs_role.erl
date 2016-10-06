@@ -26,7 +26,6 @@ handle_cast(_Event, Status) ->
 handle_call({'socket_protocol', Cmd, Bin}, _From, Status) ->
     case handle_socket_protocol(Cmd, Status, Bin) of
         {ok, NewStatus} ->
-            
             {reply, ok, NewStatus};
         _R ->
             {reply, ok, Status}
@@ -47,7 +46,11 @@ code_change(_oldvsn, Status, _extra) ->
 
 handle_socket_protocol(Cmd, Status, Bin) ->
     [H1, H2, H3, _, _] = integer_to_list(Cmd),
-    case [H1, H2, H3] of
-        "101" -> hs_pt_chat:handle(Cmd, Status, Bin);
-        _ -> {error, "handle_socket_protocol failure"}
+    Module = get_handle_scoket_protocol_module([H1, H2, H3]),
+    case is_atom(Module) of
+        true -> Module:handle(Cmd, Status, Bin);
+        false -> Module
     end.
+
+get_handle_scoket_protocol_module("101") ->  hs_chat_101;
+get_handle_scoket_protocol_module(_) ->  {error, "handle_socket_protocol failure"}.

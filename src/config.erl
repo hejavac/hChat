@@ -7,7 +7,7 @@
         get_port/0
     ]).
 
--define(DEF_PORT,    2222).
+-define(DEF_PORT, 2222).
 
 %% 获得端口
 get_port() -> 

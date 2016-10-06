@@ -15,6 +15,9 @@ start() ->
 %% Application behaviour callbacks
 %%----------------------------------------------------------------------
 start(_Type, _Args) ->
+    % 数据库初始化
+    db:init(),
+    hs_account:test_login(),
     ListenPort = config:get_port(),
     io:format("~n M:~p L:~p ListenPort:~p ~n", [?MODULE, ?LINE, ListenPort]),
     supervisor:start_link({local, ?MODULE}, ?MODULE, [ListenPort]).
@@ -46,6 +49,14 @@ init([Port]) ->
                 infinity,
                 supervisor,
                 [hs_tcp_client_sup]
+            },
+            % 聊天进程
+            {   hs_chat,
+                {hs_chat, start_link, []},
+                permanent,
+                infinity,
+                worker,
+                [hs_chat]
             }
             ]
         }

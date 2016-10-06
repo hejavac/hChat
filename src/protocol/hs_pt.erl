@@ -1,25 +1,27 @@
 
 -module(hs_pt).
 
--export([send_one/2]).
+-export([send/2]).
 
--export([read_string/1, pack/2]).
+-export([unpack_string/1, pack/2]).
 
 -include("hs_pt.hrl").
 
-send_one(S, Bin) when is_port(S) ->
-    gen_tcp:send(S, Bin).
+send(S, Bin) when is_port(S) ->
+    gen_tcp:send(S, Bin);
+send(_S, _Bin) ->
+    skip.
 
 %%读取字符串
-read_string(<<Len:16, Bin1/binary>>) ->
+unpack_string(<<Len:16, Bin1/binary>>) ->
     case Bin1 of
         <<Str:Len/binary-unit:8, Rest/binary>> ->
             {binary_to_list(Str), Rest};
         _R1 ->
-            {[],<<>>}
+            {[], <<>>}
     end;
-read_string(_) ->
-    {[],<<>>}.
+unpack_string(_) ->
+    {[], <<>>}.
 
 pack(Cmd, Data) ->
     L = byte_size(Data) + ?HEADER_LENGTH,
