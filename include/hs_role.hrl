@@ -2,8 +2,9 @@
 
 
 %% 玩家record
--record(role, {
+-record(hs_role, {
 		id = 0
+        , nickname = ""
 		, pid = 0
 		, socket = 0
 	}).

@@ -2,12 +2,27 @@
 -module(hs_role).
 
 -behaviour(gen_server).
--export([start/0, stop/1]).
+
+-export([start_link/0, stop/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
--export([]).
+-export([
+        set_hs_role/2
+        , socket_protocol/3
+        , socket_protocol/4
+    ]).
 
-start() ->
+set_hs_role(Pid, HsRole) ->
+    gen_server:cast(Pid, {'set_hs_role', HsRole}).
+
+%% 暂时不用,用gen:call能获得更多信息
+socket_protocol(Pid, Cmd, Data) ->
+    gen_server:call(Pid, {'socket_protocol', Cmd, Data}).
+
+socket_protocol(Pid, Cmd, Data, Timeout) ->
+    gen_server:call(Pid, {'socket_protocol', Cmd, Data}, Timeout).
+
+start_link() ->
     gen_server:start(?MODULE, [], []).
 
 stop(Pid) ->
@@ -15,7 +30,11 @@ stop(Pid) ->
 
 init([]) ->
     process_flag(priority, max),
+    io:format("~n M:~p L:~p init ~n", [?MODULE, ?LINE]),
     {ok, none}.
+
+handle_cast({'set_hs_role', HsRole}, _Status) ->
+    {stop, normal, HsRole};
 
 handle_cast(stop, Status) ->
     {stop, normal, Status};

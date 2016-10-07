@@ -3,7 +3,7 @@
 
 -export([send/2]).
 
--export([unpack_string/1, pack/2]).
+-export([unpack_string/1, pack_string/1, pack/2]).
 
 -include("hs_pt.hrl").
 
@@ -22,6 +22,12 @@ unpack_string(<<Len:16, Bin1/binary>>) ->
     end;
 unpack_string(_) ->
     {[], <<>>}.
+
+pack_string(S) when is_binary(S)->
+    L = byte_size(S),
+    <<L:16, S/binary>>;
+pack_string(_) ->
+    <<0:16>>.
 
 pack(Cmd, Data) ->
     L = byte_size(Data) + ?HEADER_LENGTH,

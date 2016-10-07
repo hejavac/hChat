@@ -20,6 +20,14 @@ fetch_do(Sql) ->
         Error -> erlang:error({mysql_error, Sql, Error})
     end.
 
+%% 查找单个
+fetch_one(Sql) -> 
+    case mysql:fetch(?DB, Sql) of
+        {data, {_, _, [], _, _, _, _, _}} -> fail;
+        {data, {_, _, [[R]], _, _, _, _, _}} -> R;
+        Error -> erlang:error({mysql_error, Sql, Error})
+    end.
+
 %% 查找行数
 fetch_row(Sql) -> 
 	case mysql:fetch(?DB, Sql) of
