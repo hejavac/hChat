@@ -135,7 +135,7 @@ wait_for_data({inet_async, Socket, Ref, {ok, <<Len:16, Cmd:16>>}}, #state{ref = 
         true ->
             Ref1 = async_recv(Socket, BodyLen, ?TCP_TIMEOUT),
             receive
-               {inet_async, Socket, Ref1, {ok, Binary}} ->
+                {inet_async, Socket, Ref1, {ok, Binary}} ->
                     case unpack_protocol(Cmd, Binary) of
                         %%这里是处理游戏逻辑
                         {ok, Data} ->
@@ -148,7 +148,7 @@ wait_for_data({inet_async, Socket, Ref, {ok, <<Len:16, Cmd:16>>}}, #state{ref = 
                         Other ->
                             do_lost(Socket, State, Cmd, Other)
                     end;
-                 Other ->
+                Other ->
                     do_lost(Socket, State, Cmd, Other)
             end;
         false ->

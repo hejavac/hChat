@@ -26,6 +26,10 @@ unpack_string(_) ->
 pack_string(S) when is_binary(S)->
     L = byte_size(S),
     <<L:16, S/binary>>;
+pack_string(S) when is_list(S)->
+    SBin = iolist_to_binary(S),
+    L = byte_size(SBin),
+    <<L:16, SBin/binary>>;
 pack_string(_) ->
     <<0:16>>.
 
